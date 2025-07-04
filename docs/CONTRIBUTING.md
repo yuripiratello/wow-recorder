@@ -1,6 +1,6 @@
 # Contributing
 
-The below steps describe development on Windows. The app is currently not supported on other operating systems. 
+The below steps describe development on Windows and macOS. The app supports both platforms using platform-specific OBS binaries. 
 
 ## Architecture
 Once I drew the structure of the application in Excalidraw. You can see that below. It's a rough overview of the key parts and may be a useful overview for any interested developers.

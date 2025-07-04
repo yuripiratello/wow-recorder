@@ -1,8 +1,8 @@
 import { BrowserWindow } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import * as osn from 'obs-studio-node';
-import { IFader, IInput, IScene, ISceneItem, ISource } from 'obs-studio-node';
+import * as osn from './obsLoader';
+import { IFader, IInput, IScene, ISceneItem, ISource } from './obsLoader';
 import WaitQueue from 'wait-queue';
 
 import { UiohookKeyboardEvent, UiohookMouseEvent, uIOhook } from 'uiohook-napi';
@@ -1336,11 +1336,18 @@ export default class Recorder extends EventEmitter {
     try {
       osn.NodeObs.IPC.host(this.uuid);
 
-      osn.NodeObs.SetWorkingDirectory(
-        fixPathWhenPackaged(
-          path.join(__dirname, '../../', 'node_modules', 'obs-studio-node'),
-        ),
-      );
+      // Platform-specific working directory setup
+      const obsNodeModulePath = this.getObsNodeModulePath();
+      osn.NodeObs.SetWorkingDirectory(fixPathWhenPackaged(obsNodeModulePath));
+
+      // Platform-specific initialization
+      if (process.platform === 'darwin') {
+        this.initializeMacOSOBS();
+      } else if (process.platform === 'win32') {
+        this.initializeWindowsOBS();
+      } else {
+        throw new Error(`Unsupported platform: ${process.platform}`);
+      }
 
       const initResult = osn.NodeObs.OBS_API_initAPI(
         'en-US',
@@ -1360,6 +1367,50 @@ export default class Recorder extends EventEmitter {
 
     this.obsInitialized = true;
     console.info('[Recorder] OBS initialized successfully');
+  }
+
+  /**
+   * Get the path to the OBS node module based on platform
+   */
+  private getObsNodeModulePath(): string {
+    if (process.platform === 'darwin') {
+      // Try macOS-specific module first, fallback to generic
+      const darwinPath = path.join(__dirname, '../../', 'node_modules', 'obs-studio-node-darwin');
+      if (require('fs').existsSync(darwinPath)) {
+        return darwinPath;
+      }
+      return path.join(__dirname, '../../', 'node_modules', 'obs-studio-node');
+    } else if (process.platform === 'win32') {
+      // Try Windows-specific module first, fallback to generic
+      const win32Path = path.join(__dirname, '../../', 'node_modules', 'obs-studio-node-win32');
+      if (require('fs').existsSync(win32Path)) {
+        return win32Path;
+      }
+      return path.join(__dirname, '../../', 'node_modules', 'obs-studio-node');
+    }
+    
+    return path.join(__dirname, '../../', 'node_modules', 'obs-studio-node');
+  }
+
+  /**
+   * macOS-specific OBS initialization
+   */
+  private initializeMacOSOBS() {
+    console.info('[Recorder] Initializing OBS for macOS');
+    
+    // macOS-specific OBS setup can go here
+    // For now, we'll use the same initialization as Windows
+    // but this is where we'd add macOS-specific configuration
+  }
+
+  /**
+   * Windows-specific OBS initialization
+   */
+  private initializeWindowsOBS() {
+    console.info('[Recorder] Initializing OBS for Windows');
+    
+    // Windows-specific OBS setup
+    // This is where we'd add Windows-specific configuration
   }
 
   /**

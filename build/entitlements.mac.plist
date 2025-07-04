@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Required for screen recording -->
+  <key>com.apple.security.device.camera</key>
+  <true/>
+  
+  <!-- Required for microphone access -->
+  <key>com.apple.security.device.audio-input</key>
+  <true/>
+  
+  <!-- Required for OBS Studio Node native modules -->
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+  
+  <!-- Required for dynamic library loading -->
+  <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+  <true/>
+  
+  <!-- Required for file system access -->
+  <key>com.apple.security.files.user-selected.read-write</key>
+  <true/>
+  
+  <!-- Required for network access (if cloud features are used) -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+  
+  <!-- Required for accessing user's home directory -->
+  <key>com.apple.security.files.downloads.read-write</key>
+  <true/>
+  
+  <!-- Required for accessing user's movies directory -->
+  <key>com.apple.security.files.movies.read-write</key>
+  <true/>
+</dict>
+</plist>
