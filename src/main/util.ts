@@ -323,11 +323,29 @@ const writeMetadataFile = async (videoPath: string, metadata: Metadata) => {
 
 /**
  * Open a folder in system explorer.
+ * Supports both Windows (explorer.exe) and macOS (open command).
  */
 const openSystemExplorer = (filePath: string) => {
-  const windowsPath = filePath.replace(/\//g, '\\');
-  const cmd = `explorer.exe /select,"${windowsPath}"`;
-  exec(cmd, () => {});
+  if (process.platform === 'darwin') {
+    // macOS: Use 'open -R' to reveal file in Finder
+    const cmd = `open -R "${filePath}"`;
+    exec(cmd, (error) => {
+      if (error) {
+        console.error('[openSystemExplorer] macOS open command failed:', error);
+      }
+    });
+  } else if (process.platform === 'win32') {
+    // Windows: Use explorer.exe
+    const windowsPath = filePath.replace(/\//g, '\\');
+    const cmd = `explorer.exe /select,"${windowsPath}"`;
+    exec(cmd, (error) => {
+      if (error) {
+        console.error('[openSystemExplorer] Windows explorer command failed:', error);
+      }
+    });
+  } else {
+    console.warn('[openSystemExplorer] Unsupported platform:', process.platform);
+  }
 };
 
 /**

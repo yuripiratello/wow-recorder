@@ -8,6 +8,7 @@ import {
   Tray,
   Menu,
   clipboard,
+  systemPreferences,
 } from 'electron';
 import os from 'os';
 import { uIOhook } from 'uiohook-napi';
@@ -95,6 +96,44 @@ const installExtensions = async () => {
 };
 
 /**
+ * Check and request macOS permissions for screen recording and accessibility
+ */
+const checkMacOSPermissions = async () => {
+  if (process.platform !== 'darwin') {
+    return;
+  }
+
+  console.info('[Main] Checking macOS permissions...');
+
+  // Check accessibility permission (required for global hotkeys)
+  const hasAccessibilityPermission = systemPreferences.isTrustedAccessibilityClient(false);
+  
+  if (!hasAccessibilityPermission) {
+    console.warn('[Main] Accessibility permission not granted');
+    
+    // Show dialog asking user to grant permission
+    const result = await dialog.showMessageBox(mainWindow!, {
+      type: 'warning',
+      title: 'Accessibility Permission Required',
+      message: 'WoW Recorder needs accessibility permission to capture global hotkeys (like push-to-talk).',
+      detail: 'Click "Grant Permission" to open System Preferences and enable accessibility access for WoW Recorder.',
+      buttons: ['Grant Permission', 'Skip'],
+      defaultId: 0,
+    });
+
+    if (result.response === 0) {
+      // Request accessibility permission (this will open System Preferences)
+      systemPreferences.isTrustedAccessibilityClient(true);
+    }
+  } else {
+    console.info('[Main] Accessibility permission already granted');
+  }
+
+  // Note: Screen recording permission is handled by ScreenCaptureKit when first accessed
+  // The Swift utilities will show appropriate error messages if permission is denied
+};
+
+/**
  * Setup tray icon, menu and event listeners.
  */
 const setupTray = () => {
@@ -176,6 +215,9 @@ const createWindow = async () => {
 
     assert(manager);
     await manager.manage();
+
+    // Check macOS permissions after manager is ready
+    await checkMacOSPermissions();
 
     const startMinimized = cfg.get<boolean>('startMinimized');
 
