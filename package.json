@@ -194,7 +194,7 @@
   },
   "optionalDependencies": {
     "obs-studio-node-win32": "https://pub-4cf93aaf84c649c88aadb13a092952f2.r2.dev/osn-0.25.34wcr-release-win64.tar.gz",
-    "obs-studio-node-darwin": "https://obsstudionodes3.streamlabs.com/osn-0.25.34-release-osx.tar.gz"
+    "obs-studio-node-darwin": "https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/osn-0.25.34-release-osx.tar.gz"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",

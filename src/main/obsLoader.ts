@@ -23,7 +23,8 @@ function loadObsModule() {
       case 'win32':
         // Try to load Windows-specific OBS module
         try {
-          return require('obs-studio-node-win32');
+          // Use dynamic import to avoid webpack bundling issues
+          return eval('require("obs-studio-node-win32")');
         } catch (winError) {
           console.warn('[OBS Loader] Windows-specific OBS module not found, falling back to default');
           // Fallback to existing Windows module
@@ -33,10 +34,17 @@ function loadObsModule() {
       case 'darwin':
         // Try to load macOS-specific OBS module
         try {
-          return require('obs-studio-node-darwin');
+          // Use dynamic import to avoid webpack bundling issues
+          return eval('require("obs-studio-node-darwin")');
         } catch (macError) {
-          console.warn('[OBS Loader] macOS-specific OBS module not found');
-          throw new Error(`OBS Studio Node not available for macOS. Please install obs-studio-node-darwin dependency.`);
+          console.warn('[OBS Loader] macOS-specific OBS module not found, falling back to default');
+          // For now, fallback to the Windows module for testing
+          // This will be replaced with proper macOS binaries later
+          try {
+            return require('obs-studio-node');
+          } catch (fallbackError) {
+            throw new Error(`OBS Studio Node not available for macOS. Please install obs-studio-node-darwin dependency. Error: ${fallbackError.message}`);
+          }
         }
         
       default:
