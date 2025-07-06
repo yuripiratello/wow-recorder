@@ -34,6 +34,8 @@ import {
   exists,
 } from './util';
 
+import { MacOSScreenCapture } from './ScreenCapture';
+
 import {
   CrashData,
   IOBSDevice,
@@ -82,6 +84,11 @@ export default class Recorder extends EventEmitter {
    * ConfigService instance.
    */
   private cfg: ConfigService = ConfigService.getInstance();
+
+  /**
+   * macOS screen capture instance (only initialized on macOS)
+   */
+  private macOSScreenCapture?: MacOSScreenCapture;
 
   /**
    * Location to write all recording to. This is not the final location of
@@ -1398,9 +1405,10 @@ export default class Recorder extends EventEmitter {
   private initializeMacOSOBS() {
     console.info('[Recorder] Initializing OBS for macOS');
     
-    // macOS-specific OBS setup can go here
-    // For now, we'll use the same initialization as Windows
-    // but this is where we'd add macOS-specific configuration
+    // Initialize macOS screen capture system
+    this.macOSScreenCapture = new MacOSScreenCapture();
+    
+    console.info('[Recorder] macOS screen capture system initialized');
   }
 
   /**
@@ -1884,14 +1892,29 @@ export default class Recorder extends EventEmitter {
 
   /**
    * Check if the name of the window matches one of the known WoW window names.
+   * Supports both Windows (.exe) and macOS (app bundle) patterns.
    */
   private static windowMatch(item: { name: string; value: string | number }) {
-    return (
-      item.name.startsWith('[Wow.exe]: ') ||
-      item.name.startsWith('[WowT.exe]: ') ||
-      item.name.startsWith('[WowB.exe]: ') ||
-      item.name.startsWith('[WowClassic.exe]: ')
-    );
+    if (process.platform === 'win32') {
+      // Windows patterns
+      return (
+        item.name.startsWith('[Wow.exe]: ') ||
+        item.name.startsWith('[WowT.exe]: ') ||
+        item.name.startsWith('[WowB.exe]: ') ||
+        item.name.startsWith('[WowClassic.exe]: ')
+      );
+    } else if (process.platform === 'darwin') {
+      // macOS patterns
+      const name = item.name.toLowerCase();
+      return (
+        name.includes('world of warcraft') ||
+        name.includes('wow') ||
+        name.includes('battle.net') ||
+        name.includes('blizzard')
+      );
+    }
+    
+    return false;
   }
 
   /**
@@ -1932,6 +1955,34 @@ export default class Recorder extends EventEmitter {
     const window = String(match.value);
     console.info('[Recorder] Found a match:', window);
     return window;
+  }
+
+  /**
+   * macOS-specific method to find WoW windows using ScreenCaptureKit
+   */
+  private async findMacOSWowWindow(): Promise<string | undefined> {
+    if (!this.macOSScreenCapture) {
+      console.warn('[Recorder] macOS screen capture not initialized');
+      return undefined;
+    }
+
+    try {
+      const bestWindow = await this.macOSScreenCapture.findBestWoWWindow();
+      
+      if (!bestWindow) {
+        console.info('[Recorder] No suitable WoW window found on macOS');
+        return undefined;
+      }
+
+      // Format the window identifier for OBS (this may need adjustment based on OBS requirements)
+      const windowIdentifier = `${bestWindow.name}:${bestWindow.id}:${bestWindow.ownerName}`;
+      console.info('[Recorder] Found macOS WoW window:', windowIdentifier);
+      
+      return windowIdentifier;
+    } catch (error) {
+      console.error('[Recorder] Error finding macOS WoW window:', error);
+      return undefined;
+    }
   }
 
   /**
